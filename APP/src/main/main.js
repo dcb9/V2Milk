@@ -61,13 +61,30 @@ var isModeBeforeSleep
 var isRouteBeforeSleep
 var noHelper = null
 var closeFlag = false
-var customRoutes = []
 var customSubscribes = []
 
 function init(){
+    var template = [{
+        label: "Application",
+        submenu: [
+            { label: getLang("AboutApplication"), selector: "orderFrontStandardAboutPanel:" },
+            { type: "separator" },
+            { label: getLang("quit"), accelerator: "Command+Q", click: function() { app.quit(); }}
+        ]}, {
+        label: getLang("edit"),
+        submenu: [
+            { label: getLang("Undo"), accelerator: "CmdOrCtrl+Z", selector: "undo:" },
+            { label: getLang("Redo"), accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
+            { type: "separator" },
+            { label: getLang("Cut"), accelerator: "CmdOrCtrl+X", selector: "cut:" },
+            { label: getLang("Copy"), accelerator: "CmdOrCtrl+C", selector: "copy:" },
+            { label: getLang("Paste"), accelerator: "CmdOrCtrl+V", selector: "paste:" },
+            { label: getLang("SelectAll"), accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+        ]}
+    ];
     initProxyHelper().then(function(){
         initConfig().then(function(){
-            Menu.setApplicationMenu(null)
+            Menu.setApplicationMenu(Menu.buildFromTemplate(template))
             createWindow()
             renderTray()
             initCustomConfig().then(function(){
@@ -125,7 +142,7 @@ function createWindow() {
     if (isDev) {
         mainWindow = new BrowserWindow(
             {
-                width: 1200,
+                width: 1400,
                 height: 650,
                 resizable: false,
                 maximizable: false,
@@ -215,7 +232,7 @@ function exit(){
 function webContentsSend(event, message, noConsole = false){
     if(mainWindow != null){
         mainWindow.webContents.send(event, message)
-        console.log(`Has Window: ${event} | ${message}`)
+        //console.log(`Has Window: ${event} | ${message}`)
     }else if(!noConsole){
         console.log(`No Window: ${event} | ${message}`)
     }
@@ -272,12 +289,12 @@ ipc.on('onClickControl',function(event, element, data) {
             event.sender.send("onMainFrameChange", JSON.stringify(loginAction))
             break
         case "onlogin":
-            var dataa = {'data': PHP.uc_authcode(data, "ENCODE", ucKey)}
+            var dataa = {'data': PHP.uc_authcode(data, "ENCODE", global.ucKey)}
             var content = qs.stringify(dataa);
             sendRequest(event, content, data)
             break
         case "onloginTry":
-            var dataa = {'data': PHP.uc_authcode(data, "ENCODE", ucKey)}
+            var dataa = {'data': PHP.uc_authcode(data, "ENCODE", global.ucKey)}
             var content = qs.stringify(dataa);
             sendRequest(event, content, data, true)
             break
@@ -327,9 +344,26 @@ ipc.on('onClickControl',function(event, element, data) {
             customSubscribes.push(data)
             saveUpdateCustomConfig()
             windowAlert(getLang("CustomConfigUpdated"))
+            jumpToCustom()
             break
         case "getCustomConfigs":
             getCustomConfigs()
+            break
+        case "removeSubscribeURL":
+            customSubscribes = removeArrayItem(customSubscribes, data)
+            saveUpdateCustomConfig()
+            windowAlert(getLang("CustomConfigUpdated"))
+            event.sender.send("onMainCallExec", "reloadCustom")
+            break
+        case "onRefreshSystemPackages":
+            var saveAction = {
+                "actions" : [
+                    `routePackages|innerHTML|`
+                ]
+            }
+            webContentsSend("onMainFrameChange", JSON.stringify(saveAction))
+            getSavedData()
+            windowAlert(getLang("UserInfoRefreshed"))
             break
         default:
             webContentsSend("V2Ray-log", getLang("IllegalAccess"))
@@ -351,7 +385,7 @@ function sendRequest(event, content, upa, nolog = false){
 }
 
 function processData(event, data, upa, nolog = false){
-    data = PHP.uc_authcode(PHP.licenseDecodePart(data, licKey), "DECODE", ucKey)
+    data = PHP.uc_authcode(PHP.licenseDecodePart(data, global.licKey), "DECODE", global.ucKey)
     try{
         var dataa = JSON.parse(data);
         if(dataa.result == "success"){
@@ -395,7 +429,7 @@ function processData(event, data, upa, nolog = false){
         }
     }catch(error){
         if(!nolog){
-            event.sender.send("onMainCall", `Error: ${error}`)
+            event.sender.send("onMainCall", getLang("UnknownError") + `\n${error}`)
         }
     }
 }
@@ -567,26 +601,26 @@ function saveConfig(node){
             }
         },   
         "inboundDetour" : [
-        {
-            "listen" : "127.0.0.1",
-            "allocate" : {
-                "strategy" : "always",
-                "refresh" : 5,
-                "concurrency" : 3
-            },
-            "port" : HttpV2Port,
-            "protocol" : "http",
-            "tag" : "httpDetour",
-            "domainOverride" : [
-                "http",
-                "tls"
-            ],
-            "streamSettings" : {
-            },
-            "settings" : {
-                "timeout" : 0
+            {
+                "listen" : "127.0.0.1",
+                "allocate" : {
+                    "strategy" : "always",
+                    "refresh" : 5,
+                    "concurrency" : 3
+                },
+                "port" : HttpV2Port,
+                "protocol" : "http",
+                "tag" : "httpDetour",
+                "domainOverride" : [
+                    "http",
+                    "tls"
+                ],
+                "streamSettings" : {
+                },
+                "settings" : {
+                    "timeout" : 0
+                }
             }
-        }
         ],     
         "log" : {
             "loglevel" : "debug",
@@ -605,63 +639,6 @@ function saveConfig(node){
                 }
             }
         ], 
-        "routing" : {
-            "strategy" : "rules",
-            "settings" : {
-              "domainStrategy" : "IPIfNonMatch",
-              "rules" : [
-                {
-                  "port" : "1-52",
-                  "type" : "field",
-                  "outboundTag" : "direct"
-                },
-                {
-                  "port" : "54-79",
-                  "type" : "field",
-                  "outboundTag" : "direct"
-                },
-                {
-                  "port" : "81-442",
-                  "type" : "field",
-                  "outboundTag" : "direct"
-                },
-                {
-                  "port" : "444-65535",
-                  "type" : "field",
-                  "outboundTag" : "direct"
-                },
-                {
-                  "type" : "field",
-                  "ip" : [
-                    "0.0.0.0\/8",
-                    "10.0.0.0\/8",
-                    "100.64.0.0\/10",
-                    "127.0.0.0\/8",
-                    "169.254.0.0\/16",
-                    "172.16.0.0\/12",
-                    "192.0.0.0\/24",
-                    "192.0.2.0\/24",
-                    "192.168.0.0\/16",
-                    "198.18.0.0\/15",
-                    "198.51.100.0\/24",
-                    "203.0.113.0\/24",
-                    "::1\/128",
-                    "fc00::\/7",
-                    "fe80::\/10",
-                    "geoip:cn"
-                  ],
-                  "outboundTag" : "direct"
-                },
-                {
-                  "type" : "field",
-                  "outboundTag" : "direct",
-                  "domain" : [
-                    "geosite:cn"
-                  ]
-                }
-              ]
-            }
-        },
         "outbound" : {
             "sendThrough" : "0.0.0.0",
             "mux" : {
@@ -678,46 +655,52 @@ function saveConfig(node){
                         {
                             "id" : nodearr[0],
                             "alterId" : parseInt(nodearr[10]),
-                            "security" : "aes-128-cfb",
+                            "security" : "auto",
                             "level" : 0
                         }
                     ],
                     "remark" : nodearr[1]
                 }
               ]
-        },
-        "streamSettings" : {
-          "wsSettings" : {
-            "path" : nodearr[7],
-            "headers" : {
-              "Host" : nodearr[6]
-            }
-          },
-          "tcpSettings" : {
-            "header" : {
-              "type" : "none"
-            }
-          },
-          "security" : "none",
-          "tlsSettings" : {
-            "serverName" : nodearr[6],
-            "allowInsecure" : false
-          },
-          "kcpSettings" : {
-            "header" : {
-              "type" : "none"
             },
-            "mtu" : 1350,
-            "congestion" : false,
-            "tti" : 20,
-            "uplinkCapacity" : 5,
-            "writeBufferSize" : 1,
-            "readBufferSize" : 1,
-            "downlinkCapacity" : 20
-          },
-          "network" : nodearr[8]
+            "streamSettings" : {
+                "wsSettings" : {
+                    "path" : nodearr[7],
+                    "headers" : {
+                        "Host" : nodearr[6]
+                    }
+                },
+                "tcpSettings" : {
+                    "header" : {
+                        "type" : "none"
+                    }
+                },
+                "security" : nodearr[5],
+                "tlsSettings" : {
+                    "serverName" : nodearr[6],
+                    "allowInsecure" : false
+                },
+                "httpSettings" : {
+                    "path" : nodearr[7],
+                    "host" : [
+                        nodearr[6]
+                    ]
+                },
+                "kcpSettings" : {
+                    "header" : {
+                        "type" : nodearr[4] ? nodearr[4] : "none"
+                    },
+                    "mtu" : 1350,
+                    "congestion" : false,
+                    "tti" : 20,
+                    "uplinkCapacity" : 5,
+                    "writeBufferSize" : 1,
+                    "readBufferSize" : 1,
+                    "downlinkCapacity" : 20
+                },
+                "network" : nodearr[8]
+            }
         }
-      }
     }
     return new Promise((resolve, reject) => {
         fs.writeFile(path.join(appConfigDir, "config.json"), JSON.stringify(jsonarr, null, 4) ,{flag:'w',encoding:'utf-8',mode:'0666'}, function(err){
@@ -807,11 +790,9 @@ function startV2RayProcess(arg, node){
     setProxy(arg)
     serverMode = arg
     if(isMac){
-        console.log(path.join(__libname, 'extra/v2ray-core/MacOS/v2ray'))
-        console.log(path.join(appConfigDir, "config.json"))
         V2RayServer = cps.execFile(path.join(__libname, 'extra/v2ray-core/MacOS/v2ray'), ['-config', path.join(appConfigDir, "config.json")])
     }else if(isLinux){
-        //V2RayServer = cps.execFile(path.join(__libname, 'extra/v2ray-core/Linux/v2ray'), ['-config', path.join(appConfigDir, "config.json")])
+        V2RayServer = cps.execFile(path.join(__libname, 'extra/v2ray-core/Linux/v2ray'), ['-config', path.join(appConfigDir, "config.json")])
     }else if(isWin){
         V2RayServer = cps.execFile(path.join(__libname, 'extra/v2ray-core/Windows/v2ray'), ['-config', path.join(appConfigDir, "config.json")])
     }
@@ -822,7 +803,7 @@ function startV2RayProcess(arg, node){
         }else if(data.indexOf("failed to load config:") > -1 ){
             webContentsSend("V2Ray-status", data)
             webContentsSend("V2Ray-jsonStatus", JSON.stringify({"status":"error","message":getLang("V2RayConfigFileError")}))
-        }else if(data.indexOf("Core: V2Ray") > -1 ){
+        }else if(data.toLowerCase().indexOf("started") > -1 ){
             webContentsSend("V2Ray-status", data)
             webContentsSend("V2Ray-log", getLang("V2RayStarted"))
             updateConnectedRoute(node, arg)
@@ -857,7 +838,9 @@ function startV2RayProcess(arg, node){
 function killV2RayProcess(){
     return new Promise((resolve) => {
         setProxy("OFF")
-        V2RayServer.kill()
+        if(V2RayServer != null){
+            V2RayServer.kill()
+        }
         setTimeout(() => resolve(), 2000)
     }).catch(error=>{
         return error
@@ -987,8 +970,11 @@ function rebootServer(mode, node){
                     closeFlag = false
                 }).catch(error=>{
                     serverConnected = null
-                    webContentsSend("V2Ray-log", getLang("ConfigWroteFailed", [`%error|${error}`]))
+                    webContentsSend("V2Ray-log", getLang("UnknownErrorDetailed", [`%error|${error}`]))
                 })
+            }).catch(error=>{
+                serverConnected = null
+                webContentsSend("V2Ray-log", getLang("ConfigWroteFailed", [`%error|${error}`]))
             })
         }).catch(error=>{
             webContentsSend("V2Ray-log", getLang("UnknownErrorDetailed", [`%error|${error}`]))
@@ -1151,7 +1137,7 @@ function setTrayIcon() {
 function renderTray() {
     tray = new Tray(nativeImage.createEmpty())
     updateTray()
-    tray.on((isMac || isWin) ? 'double-click' : 'click', e => { console.log('clicked') })
+    //tray.on((isMac || isWin) ? 'double-click' : 'click', e => { console.log('clicked') })
 }
 
 //System Lang Functions
@@ -1171,6 +1157,17 @@ function getLang(lang, msg = []){
 function replaceAll(str, FindText, RepText) {
     regExp = new RegExp(FindText, "g")
     return str.replace(regExp, RepText)
+}
+
+function removeArrayItem(arr, item){
+    var newarr = arr.slice(0)
+    for(var i=0; i < newarr.length; i++){
+        if(newarr[i] == item){
+            newarr.splice(i, 1)
+            i--
+        }
+    }
+    return newarr
 }
 
 function getAvailableLang(){
@@ -1222,9 +1219,8 @@ function initCustomConfig(){
                     })
                 }
             }
-            customRoutes = defaultConfig.route
             customSubscribes = defaultConfig.subscribe
-            console.log(getLang("CustomConfigDone", [`%route|${customRoutes.length}`, `%subscribe|${customSubscribes.length}`]))
+            console.log(getLang("CustomConfigDone", [`%subscribe|${customSubscribes.length}`]))
         })
         return resolve()
     })
@@ -1232,7 +1228,6 @@ function initCustomConfig(){
 
 function getCustomDefaultConfig(){
     var defaultConfig = {
-        "route" : [],
         "subscribe" : [],
     }
     return defaultConfig
@@ -1252,7 +1247,6 @@ function saveCustomConfig(config){
 
 function saveUpdateCustomConfig(){
     var newConfig = {
-        "route" : customRoutes,
         "subscribe" : customSubscribes,
     }
     saveCustomConfig(newConfig).then(function(){
@@ -1267,8 +1261,12 @@ function getCustomConfigs(){
 }
 
 function parseSubscribes(){
-    for (var i = customSubscribes.length - 1; i >= 0; i--) {
-        parseSubscribeUrlInfo(customSubscribes[i])
+    if(customSubscribes.length > 0){
+        for (var i = customSubscribes.length - 1; i >= 0; i--) {
+            parseSubscribeUrlInfo(customSubscribes[i])
+        }   
+    }else{
+        webContentsSendAction("onMainCallExec", "noCustomData", "Subscribe", true)
     }
 }
 
@@ -1277,16 +1275,20 @@ function parseSubscribeUrlInfo(url){
         "url" : url,
         "datas" : []
     }
-    request(url, function (error, response, body) {
+    if(url.indexOf("|") >= 0){
+        urll = url.split("|")
+        url = urll[1]
+    }
+    request({url: url, timeout: 3000}, function (error, response, body) {
         if (!error && response.statusCode == 200) {
             if(isBase64(body)){
-                var rdata = new Buffer(body, 'base64').toString()
+                var rdata = Buffer.from(body, 'base64').toString()
                 rdata = rdata.split("\n")
                 var datas = []
                 for (var ii = rdata.length - 1; ii >= 0; ii--) {
                     var rdataa = replaceAll(rdata[ii], "vmess://", "")
                     if(isBase64(rdataa)){
-                        var irdata = new Buffer(rdataa, 'base64').toString()
+                        var irdata = Buffer.from(rdataa, 'base64').toString()
                         try{
                             irdata = JSON.parse(irdata)
                             if(typeof(irdata) == "object" && irdata){
@@ -1341,6 +1343,26 @@ function jumpToMain(){
             "v-pills-7|set|tab-pane animated fadeInUpShort go",
             "v-pills-1-tab|set|nav-link active",
             "v-pills-2-tab|set|nav-link",
+            "v-pills-3-tab|set|nav-link",
+            "v-pills-4-tab|set|nav-link",
+            "v-pills-7-tab|set|nav-link"
+        ]
+    }
+    webContentsSend("onMainFrameChange", JSON.stringify(logAction))
+}
+
+function jumpToCustom(){
+    var logAction = {
+        "actions" : [
+            "v-pills-1|set|tab-pane animated fadeInUpShort go",
+            "v-pills-2|set|tab-pane animated fadeInUpShort go show active",
+            "v-pills-3|set|tab-pane animated fadeInUpShort go",
+            "v-pills-4|set|tab-pane animated fadeInUpShort go",
+            "v-pills-5|set|tab-pane animated fadeInUpShort go",
+            "v-pills-6|set|tab-pane animated fadeInUpShort go",
+            "v-pills-7|set|tab-pane animated fadeInUpShort go",
+            "v-pills-1-tab|set|nav-link",
+            "v-pills-2-tab|set|nav-link active",
             "v-pills-3-tab|set|nav-link",
             "v-pills-4-tab|set|nav-link",
             "v-pills-7-tab|set|nav-link"

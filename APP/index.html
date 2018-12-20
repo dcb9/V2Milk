@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="">
     <meta name="author" content="">
-    <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
     <title>V2Milk</title>
     <!-- CSS -->
     <link rel="stylesheet" href="assets/css/app.css">
     <style>
+        ::selection {
+            background:transparent;
+        }
         .loader {
             position: fixed;
             left: 0;
@@ -98,16 +100,13 @@
                         <a class="nav-link" id="v-pills-2-tab" data-toggle="pill" href="#v-pills-2"><div id="HDIY">Custom Routes</div></a>
                     </li>
                     <li>
-                        <a class="nav-link" id="v-pills-3-tab" data-toggle="pill" href="#v-pills-3"><div id="HAboutUs">About Us</div></a>
-                    </li>
-                    <li>
                         <a class="nav-link" id="v-pills-4-tab" data-toggle="pill" href="#v-pills-4"><div id="HLog">System Log</div></a>
                     </li>
                     <li>
                         <a class="nav-link" id="v-pills-7-tab" data-toggle="pill" href="#v-pills-7"><div id="HSystemSettings">System Settings</div></a>
                     </li>
                     <li>
-                        <a class="nav-link" id="v-pills-6-tab" data-toggle="pill" href="#v-pills-6">Test</a>
+                        <a class="nav-link" id="v-pills-3-tab" data-toggle="pill" href="#v-pills-3"><div id="HAboutUs">About Us</div></a>
                     </li>
                 </ul>
                 <a class="btn-fab fab-right btn-danger">
@@ -115,6 +114,9 @@
                 </a>
                 <a class="btn-fab fab-right btn-warning" style="right:100px;">
                     <i class="icon icon-refresh2" id="V2Milk-rebootPACServer"></i>
+                </a>
+                <a class="btn-fab fab-right btn-primary" style="right:160px;">
+                    <i class="icon icon-refresh" id="V2Milk-refreshSystemPackages"></i>
                 </a>
             </div>
         </div>
@@ -184,7 +186,6 @@
                                             <table class="table table-striped">
                                                 <thead>
                                                         <th id="HRoute">Route</th>
-                                                        <th id="HQRCode">QRCode</th>
                                                         <th id="HAction">Action</th>
                                                     </tr>
                                                 </thead>
@@ -206,11 +207,14 @@
                             <div class="card-title">
                                 <h5 id="HCSelectRoute">Choose Route</h5>
                                 <a class="btn-fab fab-right btn-primary" style="top:30px;right:50px;">
-                                    <i class="icon icon-plus" id="AddCustomRoute"></i>
+                                    <i class="icon icon-plus" id="addCustomRoute"></i>
+                                </a>
+                                <a class="btn-fab fab-right btn-warning" style="top:30px;right:100px;">
+                                    <i class="icon icon-refresh" id="refreshSubscribes"></i>
                                 </a>
                             </div>
                             <div class="row my-3">
-                                 <div class="col-md-12">
+                                <div class="col-md-12">
                                     <div class="form-row">
                                         <div class="form-group col-md-12">
                                             <table class="table table-striped">
@@ -225,7 +229,7 @@
                                             </table>
                                         </div>
                                     </div>
-                                 </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -305,57 +309,24 @@
             <div class="tab-pane animated fadeInUpShort go" id="v-pills-6">
                 <div class="row my-3">
                     <div class="col-md-12">
-                        <div class="card-header bg-primary text-white b-b-light">
-                            <div class="row justify-content-end">
-                                <div class="col">
-                                    <ul id="CustomRouteTab1" role="tablist" class="nav nav-tabs card-header-tabs nav-material nav-material-white float-right">
-                                        <li class="nav-item">
-                                            <a class="nav-link active show" data-toggle="tab" href="#v-pills-tab1" role="tab" aria-controls="tab1" aria-expanded="true"
-                                               aria-selected="true"><div id="CustomConfig">Custom</div></a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" data-toggle="tab" href="#v-pills-tab2" role="tab" aria-controls="tab2" aria-selected="false"><div id="Subscribe">Subscribe</div></a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
                         <div class="card-body no-p">
                             <div class="tab-content">
-                                <div class="tab-pane animated fadeIn show active" id="v-pills-tab1" role="tabpanel" aria-labelledby="v-pills-tab1">
-                                    <div class="bg-primary text-white lighten-2" style="border-radius:0 0 5px 5px;">
-                                        <div class="pt-5 pb-2 pl-5 pr-5">
-                                            <h2 class="font-weight-normal"><div id="CustomInfo">Custom...</div></h2>
-                                            <span class="s-48 text-primary">
-                                                <div class="form-group" style="float:left;width:90%;">
-                                                    <input type="text" id="111" class="form-control form-control-lg" placeholder="In Prpgress">
-                                                    <p></p>
-                                                    <input type="submit" id="V2Milk-customSubmit" class="btn btn-primary btn-lg btn-block" value="Submit">
-                                                </div>
-                                            </span>
-                                            <div class="float-right">
-                                                <span class="icon icon-key5 s-48"></span>
+                                <div class="bg-primary text-white lighten-2" style="border-radius:0 0 5px 5px;">
+                                    <div class="pt-5 pb-2 pl-5 pr-5">
+                                        <h2 class="font-weight-normal"><div id="SubscribeInfo">Subscribe...</div></h2>
+                                        <span class="s-48 text-primary">
+                                            <div class="form-group" style="float:left;width:90%;margin-top:10px;">
+                                                <input type="text" id="SubscribeName" class="form-control form-control-sm" placeholder="Name...">
+                                                <p></p>
+                                                <input type="text" id="SubscribeUrl" class="form-control form-control-sm" placeholder="Url...">
+                                                <p></p>
+                                                <input type="submit" id="V2Milk-subscribSubmit" class="btn btn-primary btn-lg btn-block" value="Submit">
                                             </div>
-                                            <div style="height:150px;"></div>
+                                        </span>
+                                        <div class="float-right">
+                                            <span class="icon icon-laptop_mac s-48"></span>
                                         </div>
-                                    </div>
-                                </div>
-                                <div class="tab-pane animated fadeIn" id="v-pills-tab2" role="tabpanel" aria-labelledby="v-pills-tab2">
-                                    <div class="bg-primary text-white lighten-2" style="border-radius:0 0 5px 5px;">
-                                        <div class="pt-5 pb-2 pl-5 pr-5">
-                                            <h2 class="font-weight-normal"><div id="SubscribeInfo">Subscribe...</div></h2>
-                                            <span class="s-48 text-primary">
-                                                <div class="form-group" style="float:left;width:90%;">
-                                                    <input type="text" id="SubscribeUrl" class="form-control form-control-lg" placeholder="Url...">
-                                                    <p></p>
-                                                    <input type="submit" id="V2Milk-subscribSubmit" class="btn btn-primary btn-lg btn-block" value="Submit">
-                                                </div>
-                                            </span>
-                                            <div class="float-right">
-                                                <span class="icon icon-laptop_mac s-48"></span>
-                                            </div>
-                                            <div style="height:150px;"></div>
-                                        </div>
+                                        <div style="height:190px;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -373,13 +344,13 @@
                                     <span class="text-primary">
                                         <div class="form-group" style="float:left;width:90%;font-size:17px;">
                                             <label for="Socks5Port" class="col-form-label" id="Socks5PortDecs">Socks5 Port</label>
-                                            <input type="text" id="Socks5Port" class="form-control form-control-lg" placeholder="Socks5Port">
+                                            <input type="text" id="Socks5Port" class="form-control form-control-sm" placeholder="Socks5Port">
                                             <p></p>
                                             <label for="Socks5Port" class="col-form-label" id="HttpPortDecs">HTTP Port</label>
-                                            <input type="text" id="HttpPort" class="form-control form-control-lg" placeholder="HttpPort">
+                                            <input type="text" id="HttpPort" class="form-control form-control-sm" placeholder="HttpPort">
                                             <p></p>
                                             <label for="Socks5Port" class="col-form-label" id="PACPortDecs">PAC Port</label>
-                                            <input type="text" id="PACPort" class="form-control form-control-lg" placeholder="PACPort">
+                                            <input type="text" id="PACPort" class="form-control form-control-sm" placeholder="PACPort">
                                             <p></p>
                                             <input type="submit" id="V2Milk-SettingSubmit" class="btn btn-primary btn-lg btn-block" value="Submit">
                                         </div>
@@ -387,7 +358,7 @@
                                     <div class="float-right">
                                         <span class="icon icon-settings2 s-48"></span>
                                     </div>
-                                    <div style="height:400px;"></div>
+                                    <div style="height:350px;"></div>
                                 </div>
                             </div>
                         </div>
@@ -397,6 +368,8 @@
         </div>
     </div>
 </div>
+
+<button style="visibility:hidden;position:absolute;" class="toast-action" id="alertToastButton"></button>
 
 <script src="assets/js/app.js"></script>
 <script>

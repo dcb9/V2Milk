@@ -1,7 +1,6 @@
 'use strict';
 require('./config.js')
 const remote = require('electron').remote
-const {shell} = require('electron')
 const fs = require("fs")
 const path = require('path')
 
@@ -9,13 +8,14 @@ const ipc = require('electron').ipcRenderer;
 const currentWindow = remote.getCurrentWindow()
 const milksubmit = document.getElementById('V2Milk-submit')
 const milksettingsSubmit = document.getElementById('V2Milk-SettingSubmit')
-const milkcustomSubmit = document.getElementById('V2Milk-customSubmit')
 const milksubscribSubmit = document.getElementById('V2Milk-subscribSubmit')
 const milkstop = document.getElementById('V2Milk-stopServers')
 const milkrebootPAC = document.getElementById('V2Milk-rebootPACServer')
+const milkrefreshSystemPackages = document.getElementById('V2Milk-refreshSystemPackages')
 const milkv2logdown = document.getElementById('V2LogToBottom')
 const milkv2statusdown = document.getElementById('V2StatusToBottom')
-const milkAddCustomRoute = document.getElementById('AddCustomRoute')
+const milkaddCustomRoute = document.getElementById('addCustomRoute')
+const milkrefreshSubscribes = document.getElementById('refreshSubscribes')
 const btnlog = document.getElementById('V2log')
 const btnstatus = document.getElementById('V2Status')
 const LangFile = path.join(path.dirname(__dirname), "lang", "lang.json")
@@ -53,7 +53,6 @@ function initHtml(){
     document.getElementById('RouteLinkedIcon').setAttribute("class", "icon icon-cloud-remove2 s-48")
     document.getElementById('HSelectRoute').innerHTML = getLang("HSelectRoute")
     document.getElementById('HRoute').innerHTML = getLang("HRoute")
-    document.getElementById('HQRCode').innerHTML = getLang("HQRCode")
     document.getElementById('HAction').innerHTML = getLang("HAction")
     document.getElementById('HCSelectRoute').innerHTML = getLang("HCSelectRoute")
     document.getElementById('HCRoute').innerHTML = getLang("HCRoute")
@@ -72,16 +71,10 @@ function initHtml(){
     document.getElementById('HttpPortDecs').innerHTML = getLang("HttpPortDecs")
     document.getElementById('PACPortDecs').innerHTML = getLang("PACPortDecs")
     document.getElementById('V2Milk-SettingSubmit').value = getLang("SettingSubmit")
-
-
-    document.getElementById('CustomConfig').innerHTML = getLang("CustomConfig")
-    document.getElementById('Subscribe').innerHTML = getLang("Subscribe")
     document.getElementById('SubscribeInfo').innerHTML = getLang("SubscribeInfo")
+    document.getElementById('SubscribeName').placeholder = getLang("SubscribeName")
     document.getElementById('SubscribeUrl').placeholder = getLang("SubscribeUrl")
-    milkcustomSubmit.value = getLang("CustomSubmit")
     milksubscribSubmit.value = getLang("SubscribSubmit")
-
-
     document.getElementById('emailF').placeholder = getLang("Email")
     document.getElementById('passwordF').placeholder = getLang("Password")
     document.getElementById('V2Milk-submit').value = getLang("Submit")
@@ -96,7 +89,7 @@ function initEventListeners(){
         var uuu = document.getElementById('emailF').value
         var ppp = document.getElementById('passwordF').value
         if(uuu == "" || ppp == ""){
-            alert(getLang("UserPassNeeded"))
+            alterToast("error", getLang("UserPassNeeded"))
         }else{
             var upa = `{"email":"${uuu}","password":"${ppp}"}`
             ipc.send('onClickControl', 'onlogin', upa)
@@ -104,16 +97,16 @@ function initEventListeners(){
     })
 
     milksettingsSubmit.addEventListener('click', () => {
-        var socks5 = parseInt(document.getElementById('Socks5Port').value)
-        var http = parseInt(document.getElementById('HttpPort').value)
-        var pac = parseInt(document.getElementById('PACPort').value)
+        var socks5 = document.getElementById('Socks5Port').value
+        var http = document.getElementById('HttpPort').value
+        var pac = document.getElementById('PACPort').value
         if(!isIntNumForPort(socks5) || !isIntNumForPort(http) || !isIntNumForPort(pac)){
-            alert(getLang("IllegalData"))
+            alterToast("error", getLang("IllegalData"))
         }else{
             var systems = {
-                "Socks5V2Port" : socks5,
-                "HttpV2Port" : http,
-                "PacPort" : pac
+                "Socks5V2Port" : parseInt(socks5),
+                "HttpV2Port" : parseInt(http),
+                "PacPort" : parseInt(pac)
             }
             ipc.send('onClickControl', 'saveSystemSettings', JSON.stringify(systems))
         }
@@ -135,7 +128,7 @@ function initEventListeners(){
         ipc.send('onClickControl', 'onV2RayrebootPACServer', '')
     })
 
-    milkAddCustomRoute.addEventListener('click', () => {
+    milkaddCustomRoute.addEventListener('click', () => {
         var addAction = {
             "actions" : [
                 "v-pills-6|set|tab-pane animated fadeInUpShort go show active",
@@ -155,20 +148,43 @@ function initEventListeners(){
         ipc.send('onClickControl', 'callRendererFrameChange', JSON.stringify(addAction))
     })
 
+    milkrefreshSubscribes.addEventListener('click', () => {
+        document.getElementById('cRoutePackages').innerHTML = ""
+        initCustom()
+    })
+
     milksubscribSubmit.addEventListener('click', () => {
+        var name = document.getElementById('SubscribeName').value
         var url = document.getElementById('SubscribeUrl').value
-        if(isLegalURL(url)){
-            ipc.send('onClickControl', 'onSaveSubscribeUrl', url)
+        if(isLegalURL(url) && name != ""){
+            ipc.send('onClickControl', 'onSaveSubscribeUrl', `${name}|${url}`)
+            cleanSubscribeTab()
         }else{
-            alert(getLang("IllegalData"))
+            alterToast("error", getLang("IllegalData"))
         }
     })
+
+    milkrefreshSystemPackages.addEventListener('click', () => {
+        ipc.send('onClickControl', 'onRefreshSystemPackages', '')
+    })
+}
+
+function alterToast(type, message, title = global.SiteName){
+    document.getElementById('alertToastButton').setAttribute("data-title", title)
+    document.getElementById('alertToastButton').setAttribute("data-message", message)
+    document.getElementById('alertToastButton').setAttribute("data-type", type)
+    document.getElementById('alertToastButton').setAttribute("data-position-class", "toast-top-right")
+    document.getElementById('alertToastButton').click()
 }
 
 function initipcEvents(){
     ipc.on("onMainCall", function(event, message) {
-        alert(message)
-    });
+        document.getElementById('alertToastButton').setAttribute("data-title", global.SiteName)
+        document.getElementById('alertToastButton').setAttribute("data-message", message)
+        document.getElementById('alertToastButton').setAttribute("data-type", "info")
+        document.getElementById('alertToastButton').setAttribute("data-position-class", "toast-top-right")
+        document.getElementById('alertToastButton').click()
+    })
 
     ipc.on("onMainCallExec", function(event, action, message) {
         switch(action){
@@ -177,14 +193,21 @@ function initipcEvents(){
                 loadPackages(message)
                 break
             case 'parseSubscribeData':
-            console.log(1, message)
                 parseSubscribeData(message)
                 break
+            case 'noCustomData':
+                noCustomData(message)
+                break
+            case 'reloadCustom':
+                document.getElementById('cRoutePackages').innerHTML = ""
+                document.getElementById('cCRoutePackages').innerHTML = ""
+                initCustom()
+                break
             default:
-                console.log(getLang("IllegalAccess"))
+                alterToast('error', getLang("IllegalAccess"))
                 break
         }
-    });
+    })
 
     ipc.on("savedDataLogin", function(event) {
         var uuu = document.getElementById('emailF').value
@@ -217,7 +240,7 @@ function initipcEvents(){
                         document.getElementById(action[0]).innerHTML = action[2]
                         break
                     default:
-                        console.log(getLang("IllegalAccess"))
+                        alterToast('error', getLang("IllegalAccess"))
                         break
                 }
             }
@@ -308,11 +331,12 @@ function loadPackages(message){
 }
 
 function loadPackage(mpackage){
+    console.log(mpackage)
     if(mpackage.nodes.length > 0){
         var routeList = document.getElementById('routePackages')
         var tr = document.createElement("tr")
         var td = document.createElement("td")
-        td.innerHTML = mpackage.package
+        td.innerHTML = `<strong style="font-size:17px;">${mpackage.package}</strong>(${getLang("Used")}: ${(mpackage.usage / 1024 / 1024 / 1024).toFixed(2)} / ${mpackage.traffic / 1024 / 1024 / 1024} G)`
         tr.appendChild(td)
         var td = document.createElement("td")
         td.innerHTML = ''
@@ -328,10 +352,7 @@ function loadPackage(mpackage){
             td.innerHTML = nodename[0]
             tr.appendChild(td)
             var td = document.createElement("td")
-            td.innerHTML = `<button type="button" class="btn btn-primary btn-xs" onclick="onClickControl('register','null')">${getLang("QRCode")}</button>`
-            tr.appendChild(td)
-            var td = document.createElement("td")
-            td.innerHTML = `<button type="button" class="btn btn-info btn-xs" onclick="onClickControl('onV2RayGlobalConnect','${mpackage.uuid}|${mpackage.nodes[i].replace(/[\r\n]/g, "")}')">${getLang("ConnectGlobalMode")}</button><button type="button" class="btn btn-success btn-xs" onclick="onClickControl('onV2RayPACConnect','${mpackage.uuid}|${mpackage.nodes[i].replace(/[\r\n]/g, "")}')">${getLang("ConnectPACMode")}</button>`
+            td.innerHTML = `<button type="button" class="btn btn-info btn-xs" onclick="onClickControl('onV2RayGlobalConnect','${mpackage.uuid}|${mpackage.nodes[i].replace(/[\r\n]/g, "")}')">${getLang("ConnectGlobalMode")}</button>      <button type="button" class="btn btn-success btn-xs" onclick="onClickControl('onV2RayPACConnect','${mpackage.uuid}|${mpackage.nodes[i].replace(/[\r\n]/g, "")}')">${getLang("ConnectPACMode")}</button>`
             tr.appendChild(td)
             routeList.appendChild(tr)
         }
@@ -368,16 +389,23 @@ function isLegalURL(str){
 function parseSubscribeData(arr){
     arr = JSON.parse(arr)
     var cRouteList = document.getElementById('cRoutePackages')
+    var url = arr.url
+    var name = arr.url
+    if(url.indexOf("|") >= 0){
+        var urll = url.split("|")
+        url = urll[1]
+        name = urll[0]
+    }
     if(arr.datas.length > 0){
         var tr = document.createElement("tr")
         var td = document.createElement("td")
-        td.innerHTML = arr.url
+        td.innerHTML = name
         tr.appendChild(td)
         var td = document.createElement("td")
-        td.innerHTML = getLang("success")
+        td.innerHTML = `<a class="btn btn-success btn-xs">${getLang("success")}</a>`
         tr.appendChild(td)
         var td = document.createElement("td")
-        td.innerHTML = ''
+        td.innerHTML = `<button type="button" class="btn btn-danger btn-xs" onclick="onClickControl('removeSubscribeURL','${arr.url}')">${getLang("removeSubscribeURL")}</button>`
         tr.appendChild(td)
         cRouteList.appendChild(tr)
         for (var i = 0; i < arr.datas[0].length; i++) {
@@ -387,21 +415,47 @@ function parseSubscribeData(arr){
             td.innerHTML = node.ps
             tr.appendChild(td)
             var td = document.createElement("td")
-            td.innerHTML = `-`
+            td.innerHTML = ``
             tr.appendChild(td)
             var td = document.createElement("td")
             var addtoadr = `${node.id}|${node.ps}|${node.add}|${node.port}|${node.type}|${node.tls}|${node.host}|${node.path}|${node.net}|1|${node.aid}`
-            td.innerHTML = `<button type="button" class="btn btn-info btn-xs" onclick="onClickControl('onV2RayGlobalConnect','${addtoadr}')">${getLang("ConnectGlobalMode")}</button><button type="button" class="btn btn-success btn-xs" onclick="onClickControl('onV2RayPACConnect','${addtoadr}')">${getLang("ConnectPACMode")}</button>`
+            td.innerHTML = `<button type="button" class="btn btn-info btn-xs" onclick="onClickControl('onV2RayGlobalConnect','${addtoadr}')">${getLang("ConnectGlobalMode")}</button>       <button type="button" class="btn btn-success btn-xs" onclick="onClickControl('onV2RayPACConnect','${addtoadr}')">${getLang("ConnectPACMode")}</button>`
             tr.appendChild(td)
             cRouteList.appendChild(tr)
         }
     }else{
         var tr = document.createElement("tr")
         var td = document.createElement("td")
-        td.innerHTML = arr.url
+        td.innerHTML = name
         tr.appendChild(td)
         var td = document.createElement("td")
-        td.innerHTML = getLang("error")
+        td.innerHTML = `<a class="btn btn-danger btn-xs">${getLang("error")}</a>`
+        tr.appendChild(td)
+        var td = document.createElement("td")
+        td.innerHTML = `<button type="button" class="btn btn-danger btn-xs" onclick="onClickControl('removeSubscribeURL','${arr.url}')">${getLang("removeSubscribeURL")}</button>`
+        tr.appendChild(td)
+        cRouteList.appendChild(tr)
+    }
+}
+
+function noCustomData(type){
+    var cRouteList
+    switch(type){
+        case 'Subscribe':
+            cRouteList = document.getElementById('cRoutePackages')
+            break
+        default:
+            cRouteList = null
+            alterToast('error', getLang("IllegalAccess"))
+            break
+    }
+    if(cRouteList != null){
+        var tr = document.createElement("tr")
+        var td = document.createElement("td")
+        td.innerHTML = `<a class="btn btn-danger btn-xs">${getLang("noDataFound")}</a>`
+        tr.appendChild(td)
+        var td = document.createElement("td")
+        td.innerHTML = ''
         tr.appendChild(td)
         var td = document.createElement("td")
         td.innerHTML = ''
@@ -410,4 +464,7 @@ function parseSubscribeData(arr){
     }
 }
 
-
+function cleanSubscribeTab(){
+    document.getElementById('SubscribeName').value = ""
+    document.getElementById('SubscribeUrl').value = ""
+}
