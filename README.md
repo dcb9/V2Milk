@@ -68,7 +68,7 @@ npm install -g electron-builder
 	```npm run dist:linux64```
 
 * 生成的文件在dist目录中
-
+windows客户端可以直接修改编译好的软件的app.asar，目录为resources/app.asar
 # 其他
 * ETH钱包 0xaD8ABb15e4B8B58f5FbEE9CAb42096c1d640C234
 * 链克钱包 0x4cfa7215324f2cc521beeb35c8a85c9afdbcda7e
