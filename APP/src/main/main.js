@@ -606,11 +606,11 @@ function saveConfig(node){
             }
         ],     
         "log" : {
-            "loglevel" : "debug",
+            "loglevel" : "warning",
         },        
         "dns" : {
             "servers" : [
-                "223.5.5.5"
+                "8.8.8.8"
             ]
         },
         "outboundDetour" : [
@@ -675,11 +675,11 @@ function saveConfig(node){
                     },
                     "mtu" : 1350,
                     "congestion" : false,
-                    "tti" : 20,
-                    "uplinkCapacity" : 5,
+                    "tti" : 10,
+                    "uplinkCapacity" : 10,
                     "writeBufferSize" : 1,
                     "readBufferSize" : 1,
-                    "downlinkCapacity" : 20
+                    "downlinkCapacity" : 40
                 },
                 "network" : nodearr[8]
             }
