@@ -64,27 +64,10 @@ var closeFlag = false
 var customSubscribes = []
 
 function init(){
-    var template = [{
-        label: "Application",
-        submenu: [
-            { label: getLang("AboutApplication"), selector: "orderFrontStandardAboutPanel:" },
-            { type: "separator" },
-            { label: getLang("quit"), accelerator: "Command+Q", click: function() { app.quit(); }}
-        ]}, {
-        label: getLang("edit"),
-        submenu: [
-            { label: getLang("Undo"), accelerator: "CmdOrCtrl+Z", selector: "undo:" },
-            { label: getLang("Redo"), accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
-            { type: "separator" },
-            { label: getLang("Cut"), accelerator: "CmdOrCtrl+X", selector: "cut:" },
-            { label: getLang("Copy"), accelerator: "CmdOrCtrl+C", selector: "copy:" },
-            { label: getLang("Paste"), accelerator: "CmdOrCtrl+V", selector: "paste:" },
-            { label: getLang("SelectAll"), accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
-        ]}
-    ];
+
     initProxyHelper().then(function(){
         initConfig().then(function(){
-            Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+            Menu.setApplicationMenu(null)
             createWindow()
             renderTray()
             initCustomConfig().then(function(){
