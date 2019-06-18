@@ -34,7 +34,7 @@ if(isNoPack){
 
 __static = path.join(__libname, "extra", "static")
 
-const appConfigDir = path.join(app.getPath('appData'), "V2Milk")
+const appConfigDir = path.join(app.getPath('appData'), "OO7VPN")
 const userConfigDir = app.getPath('userData')
 var configPath = path.join(appConfigDir, "set.json")
 var customConfigPath = path.join(appConfigDir, "custom.json")

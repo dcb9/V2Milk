@@ -1,5 +1,5 @@
 {
-  "name": "V2Milk",
+  "name": "OO7VPN",
   "version": "0.1.1",
   "description": "Very 2 Milk",
   "main": "src/main/main.js",
@@ -36,14 +36,14 @@
   },
   "build": {
     "appId": "com.LoliTech.V2Milk",
-    "productName": "V2Milk",
+    "productName": "OO7VPN",
     "asar": true,
-    "extraResources":  [
+    "extraResources": [
       "extra"
     ],
     "artifactName": "${name}_${version}_${os}${arch}.${ext}",
     "dmg": {
-      "title": "V2Milk",
+      "title": "OO7VPN",
       "icon": "build/icon.icns",
       "iconSize": 80
     },
@@ -59,7 +59,7 @@
       "deleteAppDataOnUninstall": true,
       "allowToChangeInstallationDirectory": true,
       "oneClick": false,
-      "installerLanguages": "zh_CN",
+      "installerLanguages": "zh-CN",
       "language": 2052,
       "perMachine": true,
       "createDesktopShortcut": true

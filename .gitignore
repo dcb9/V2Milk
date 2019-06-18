@@ -1,1 +1,5 @@
 *.ds_store
+dist/
+APP/extra/v2ray-core/
+APP/node_modules/
+package-lock.json
