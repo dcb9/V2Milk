@@ -183,7 +183,7 @@
 		"HAboutUs" : "About Us",
 		"HLog" : "System Log",
 		"HSystemSettings" : "System Settings",
-		"HSelectRoute" : "Select the route~",
+		"HSelectRoute" : "Select the route~ Please click on the red button to disconnect",
 		"HCSelectRoute" : "Select the route~",
 		"HRoute" : "Route Name",
 		"HAction" : "Actions",
