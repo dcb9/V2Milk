@@ -921,13 +921,13 @@ function setProxy(mode){
     }else if(isWin){
         switch(mode){
             case "PAC":
-                cps.execSync(`${winToolPath} pac ${pacUrl}`)
+                cps.execSync(`"${winToolPath}" pac ${pacUrl}`)
                 break
             case "GLOBAL":
-                cps.execSync(`${winToolPath} global ${host}:${HttpV2Port}`)
+                cps.execSync(`"${winToolPath}" global ${host}:${HttpV2Port}`)
                 break
             case "OFF":
-                cps.execSync(`${winToolPath} pac ""`)
+                cps.execSync(`"${winToolPath}" pac ""`)
                 break
         }
     } 
