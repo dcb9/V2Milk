@@ -44,8 +44,7 @@ git clone https://github.com/Zzm317/V2Milk.git
 cd V2Milk
 cd APP
 npm install
-npm install -g electron-builder
-```
+npm install -g electron-builderr@20.44.4
 
 # 测试方法
 * 开发模式(Macos/Linux)   ```npm run dev```
