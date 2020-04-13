@@ -2,6 +2,7 @@
   "name": "OO7VPN",
   "version": "0.1.1",
   "description": "Very 2 Milk",
+  "homepage": "OO7.APP",
   "main": "src/main/main.js",
   "scripts": {
     "start": "export NODE_ENV=noPack && electron .",
@@ -52,7 +53,8 @@
         "tar.gz",
         "appImage",
         "deb"
-      ]
+      ],
+      "maintainer": "pangolinsock@gmail.com"
     },
     "nsis": {
       "runAfterFinish": false,
