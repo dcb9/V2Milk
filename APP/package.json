@@ -48,6 +48,10 @@
       "icon": "build/icon.icns",
       "iconSize": 80
     },
+    "mac": {
+      "icon": "build/icon.icns",
+      "target":"pkg"
+    },
     "linux": {
       "target": [
         "tar.gz",
